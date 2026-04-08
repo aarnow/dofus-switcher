@@ -1,0 +1,1 @@
+export const isCapturing = ref(false)

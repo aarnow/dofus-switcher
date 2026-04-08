@@ -5,23 +5,13 @@ use windows::Win32::UI::WindowsAndMessaging::{
     HHOOK, MSLLHOOKSTRUCT, WH_MOUSE_LL, WH_KEYBOARD_LL,
     WM_XBUTTONDOWN, WM_XBUTTONUP, WM_KEYDOWN, KBDLLHOOKSTRUCT,
 };
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub struct HookConfig {
     pub key_next: u32,
     pub key_prev: u32,
     pub mouse_next: u32,
     pub mouse_prev: u32,
-}
-
-impl Default for HookConfig {
-    fn default() -> Self {
-        Self {
-            key_next: 0x45,  // E
-            key_prev: 0x41,  // A
-            mouse_next: 2,   // Mouse5
-            mouse_prev: 1,   // Mouse4
-        }
-    }
 }
 
 static HOOK_CALLBACK: Mutex<Option<Box<dyn Fn(bool) + Send>>> = Mutex::new(None);
@@ -31,6 +21,11 @@ static HOOK_CONFIG: Mutex<HookConfig> = Mutex::new(HookConfig {
     mouse_next: 2,
     mouse_prev: 1,
 });
+static HOOK_ENABLED: AtomicBool = AtomicBool::new(true);
+
+pub fn set_enabled(enabled: bool) {
+    HOOK_ENABLED.store(enabled, Ordering::Relaxed);
+}
 
 pub fn update_config(config: HookConfig) {
     let mut c = HOOK_CONFIG.lock().unwrap();
@@ -42,6 +37,10 @@ unsafe extern "system" fn mouse_proc(
     w_param: WPARAM,
     l_param: LPARAM,
 ) -> LRESULT {
+    if !HOOK_ENABLED.load(Ordering::Relaxed) {
+        return CallNextHookEx(HHOOK::default(), n_code, w_param, l_param);
+    }
+
     if n_code >= 0 {
         let msg = w_param.0 as u32;
         let is_xbutton = msg == WM_XBUTTONDOWN || msg == WM_XBUTTONUP;
@@ -59,7 +58,7 @@ unsafe extern "system" fn mouse_proc(
                             }
                         }
                     }
-                    return LRESULT(1); // bloque DOWN et UP
+                    return LRESULT(1);
                 }
             }
         }
@@ -72,6 +71,10 @@ unsafe extern "system" fn keyboard_proc(
     w_param: WPARAM,
     l_param: LPARAM,
 ) -> LRESULT {
+    if !HOOK_ENABLED.load(Ordering::Relaxed) {
+        return CallNextHookEx(HHOOK::default(), n_code, w_param, l_param);
+    }
+
     if n_code >= 0 && w_param.0 as u32 == WM_KEYDOWN {
         let info = &*(l_param.0 as *const KBDLLHOOKSTRUCT);
         if let (Ok(cb), Ok(cfg)) = (HOOK_CALLBACK.lock(), HOOK_CONFIG.lock()) {

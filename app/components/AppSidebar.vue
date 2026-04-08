@@ -32,7 +32,6 @@
 <script setup lang="ts">
 const nav = [
   { to: '/',         icon: '⚔', label: 'Multi-compte' },
-  { to: '/hotkeys',  icon: '⌨', label: 'Touches'      },
   { to: '/settings', icon: '⚙', label: 'Options'      },
 ]
 </script>

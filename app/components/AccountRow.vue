@@ -27,14 +27,14 @@
     </span>
 
     <button
-        @click="$emit('toggle')"
+        @click.stop="$emit('toggle')"
         class="w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0 relative"
         :class="enabled ? 'bg-[#1eb8cc]' : 'bg-[#1a3a4a]'"
     >
-      <span
-          class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-200"
-          :class="enabled ? 'right-0.5' : 'left-0.5'"
-      />
+  <span
+      class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-200"
+      :class="enabled ? 'right-0.5' : 'left-0.5'"
+  />
     </button>
   </div>
 </template>

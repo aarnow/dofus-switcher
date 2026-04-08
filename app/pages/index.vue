@@ -89,7 +89,9 @@ async function toggleAccount(hwnd: number, enabled: boolean) {
 onMounted(async () => {
   await refresh()
   await listen<number>('switch', (event) => {
-    activeIndex.value = event.payload
+    const hwnd = event.payload
+    const idx = accounts.value.findIndex(a => a.hwnd === hwnd)
+    if (idx !== -1) activeIndex.value = idx
   })
 })
 </script>
