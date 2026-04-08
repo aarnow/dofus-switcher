@@ -33,6 +33,7 @@
           :index="i"
           :active="i === activeIndex"
           :enabled="acc.enabled"
+          :character="getCharacterForAccount(acc.title)"
           @click="focusAccount(acc.hwnd, i)"
           @toggle="toggleAccount(acc.hwnd, !acc.enabled); acc.enabled = !acc.enabled"
       />
@@ -61,6 +62,8 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { getCharacters, matchCharacter } from '~/composables/useCharacters'
+import type { Character } from '~/composables/useCharacters'
 
 interface Account {
   hwnd: number
@@ -70,9 +73,16 @@ interface Account {
 
 const accounts = ref<Account[]>([])
 const activeIndex = ref<number>(0)
+const characters = ref<Character[]>([])
+
 const enabledCount = computed(() => accounts.value.filter(a => a.enabled).length)
 
+function getCharacterForAccount(title: string): Character | null {
+  return matchCharacter(title, characters.value)
+}
+
 async function refresh() {
+  characters.value = await getCharacters()
   accounts.value = await invoke<Account[]>('detect_windows')
   activeIndex.value = 0
 }
@@ -87,7 +97,9 @@ async function toggleAccount(hwnd: number, enabled: boolean) {
 }
 
 onMounted(async () => {
+  await new Promise(resolve => setTimeout(resolve, 500))
   await refresh()
+
   await listen<number>('switch', (event) => {
     const hwnd = event.payload
     const idx = accounts.value.findIndex(a => a.hwnd === hwnd)

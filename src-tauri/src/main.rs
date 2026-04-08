@@ -93,6 +93,30 @@ fn toggle_overlay(state: State<AppState>, handle: tauri::AppHandle, enabled: boo
 }
 
 #[tauri::command]
+fn resize_overlay(handle: tauri::AppHandle, count: u32) {
+    if let Some(w) = handle.get_webview_window("overlay") {
+        let item_w = 74i32;
+        let gap = 8i32;
+        let padding = 16i32;
+        let overlay_w = (item_w * count as i32) + (gap * (count as i32 - 1)) + padding;
+        let overlay_h = 88i32;
+
+        use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN};
+        let screen_width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
+        let x = (screen_width / 2) - (overlay_w / 2);
+
+        let _ = w.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+            width: overlay_w as u32,
+            height: overlay_h as u32,
+        }));
+        let _ = w.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+            x,
+            y: 12,
+        }));
+    }
+}
+
+#[tauri::command]
 fn set_hook_enabled(enabled: bool) {
     mouse_hook::set_enabled(enabled);
 }
@@ -158,6 +182,7 @@ fn main() {
             get_accounts,
             close_pie_menu,
             toggle_overlay,
+            resize_overlay,
             set_hook_enabled
         ])
         .run(tauri::generate_context!())

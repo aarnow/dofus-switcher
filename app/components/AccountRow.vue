@@ -10,46 +10,71 @@
     </span>
 
     <div
-        class="w-9 h-9 rounded-full flex items-center justify-center
-             text-[11px] font-bold text-[#5DCAA5] bg-[#1a4560] border border-[#1a4560] flex-shrink-0"
+        class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border flex-shrink-0"
+        :style="character
+          ? { borderColor: classColor(character.classe) }
+          : { borderColor: '#1a4560' }"
     >
-      {{ initials }}
+      <img
+          v-if="character && classImage(character.classe)"
+          :src="classImage(character.classe)"
+          :alt="character.classe"
+          class="w-full h-full object-cover"
+      />
+      <span v-else class="text-[11px] font-bold text-[#5DCAA5]">
+        {{ initials }}
+      </span>
     </div>
 
     <div class="flex-1 min-w-0">
-      <p class="text-[13px] font-bold text-[#c8e8f0] truncate">{{ name }}</p>
-      <p class="text-[11px] text-[#4a7a8a]">Client Dofus</p>
+      <p class="text-[13px] font-bold text-[#c8e8f0] truncate">
+        {{ character ? character.pseudo : name }}
+      </p>
+      <p class="text-[11px] text-[#4a7a8a]">
+        {{ character ? character.classe + ' · Init. ' + character.initiative : 'Client Dofus' }}
+      </p>
     </div>
 
-    <span v-if="active" class="text-[10px] font-bold text-[#1eb8cc] bg-[#0f2a36]
-                                border border-[#1eb8cc33] rounded-full px-2 py-0.5">
-      ACTIF
-    </span>
+    <div v-if="character" class="flex gap-1 flex-wrap justify-end max-w-[120px]">
+      <span v-for="role in character.roles.slice(0, 2)" :key="role"
+            class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#0f2a36]
+                   text-[#1eb8cc] border border-[#1eb8cc22]">
+        {{ role }}
+      </span>
+    </div>
+
+    <div
+        class="w-2 h-2 rounded-full flex-shrink-0"
+        :class="character ? 'bg-[#1eb8cc]' : 'bg-[#1a3a4a]'"
+        :title="character ? 'Rattaché à ' + character.pseudo : 'Non rattaché'"
+    />
 
     <button
         @click.stop="$emit('toggle')"
         class="w-9 h-5 rounded-full transition-colors duration-200 flex-shrink-0 relative"
         :class="enabled ? 'bg-[#1eb8cc]' : 'bg-[#1a3a4a]'"
     >
-  <span
-      class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-200"
-      :class="enabled ? 'right-0.5' : 'left-0.5'"
-  />
+      <span
+          class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-200"
+          :class="enabled ? 'right-0.5' : 'left-0.5'"
+      />
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
+import { classColor, classImage } from '~/composables/useCharacters'
+import type { Character } from '~/composables/useCharacters'
+
 const props = defineProps<{
   name: string
   index: number
   active: boolean
   enabled: boolean
+  character?: Character | null
 }>()
 
 defineEmits<{ toggle: [] }>()
 
-const initials = computed(() =>
-    props.name.slice(0, 2).toUpperCase()
-)
+const initials = computed(() => props.name.slice(0, 2).toUpperCase())
 </script>

@@ -31,7 +31,8 @@
 
 <script setup lang="ts">
 const nav = [
-  { to: '/',         icon: '⚔', label: 'Multi-compte' },
-  { to: '/settings', icon: '⚙', label: 'Options'      },
+  { to: '/',            icon: '⚔', label: 'Multi-compte' },
+  { to: '/characters',  icon: '◈', label: 'Personnages'  },
+  { to: '/settings',    icon: '⚙', label: 'Options'      },
 ]
 </script>

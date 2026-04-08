@@ -1,17 +1,40 @@
 <template>
   <div
-      class="flex items-center justify-center w-full h-full gap-1.5"
+      class="flex items-center justify-center w-full h-full gap-2 px-2"
       style="background: transparent;"
   >
     <div
         v-for="(acc, i) in accounts"
         :key="acc.hwnd"
-        class="w-8 h-8 flex items-center justify-center rounded font-mono font-bold text-xs transition-all duration-200"
+        class="flex flex-col rounded overflow-hidden transition-all duration-200 flex-shrink-0"
+        style="width: 72px;"
         :style="i === activeIndex
-        ? 'background: rgba(0,0,0,0.6); border: 1.5px solid #ff6b6b; color: #ff6b6b;'
-        : 'background: rgba(0,0,0,0.6); border: 1.5px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.4);'"
+        ? 'border: 1.5px solid #ff6b6b;'
+        : 'border: 1.5px solid rgba(255,255,255,0.15);'"
     >
-      {{ String(i + 1).padStart(2, '0') }}
+      <div class="w-full relative" style="height: 60px;">
+        <img
+            v-if="getCharacter(acc.title)"
+            :src="classImage(getCharacter(acc.title)!.classe)"
+            :alt="getCharacter(acc.title)!.classe"
+            class="w-full h-full object-cover"
+        />
+        <div v-else class="w-full h-full bg-[rgba(0,0,0,0.6)] flex items-center justify-center">
+          <span class="text-[11px] font-bold text-white opacity-40">
+            {{ String(i + 1).padStart(2, '0') }}
+          </span>
+        </div>
+      </div>
+
+      <div
+          class="w-full text-center px-1 py-0.5 truncate"
+          style="background: rgba(0,0,0,0.75); font-size: 9px; font-weight: 700; letter-spacing: 0.3px;"
+          :style="i === activeIndex
+          ? 'color: #ff6b6b;'
+          : 'color: rgba(255,255,255,0.5);'"
+      >
+        {{ getPseudo(acc.title) }}
+      </div>
     </div>
   </div>
 </template>
@@ -19,6 +42,8 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
+import { getCharacters, matchCharacter, classImage, extractPseudo } from '~/composables/useCharacters'
+import type { Character } from '~/composables/useCharacters'
 
 definePageMeta({ layout: false })
 
@@ -30,18 +55,40 @@ interface Account {
 
 const accounts = ref<Account[]>([])
 const activeIndex = ref(0)
+const characters = ref<Character[]>([])
+
+function getCharacter(title: string): Character | null {
+  return matchCharacter(title, characters.value)
+}
+
+function getPseudo(title: string): string {
+  const char = getCharacter(title)
+  return char ? char.pseudo : extractPseudo(title)
+}
+
+async function updateSize(count: number) {
+  if (count > 0) await invoke('resize_overlay', { count })
+}
 
 onMounted(async () => {
-  const existing = await invoke<Account[]>('get_accounts')
-  if (existing.length > 0) accounts.value = existing
+  characters.value = await getCharacters()
 
-  await listen<Account[]>('accounts-updated', (event) => {
+  const existing = await invoke<Account[]>('get_accounts')
+  if (existing.length > 0) {
+    accounts.value = existing
+    await updateSize(existing.length)
+  }
+
+  await listen<Account[]>('accounts-updated', async (event) => {
     accounts.value = event.payload
     activeIndex.value = 0
+    await updateSize(event.payload.length)
   })
 
   await listen<number>('switch', (event) => {
-    activeIndex.value = event.payload
+    const hwnd = event.payload
+    const idx = accounts.value.findIndex(a => a.hwnd === hwnd)
+    if (idx !== -1) activeIndex.value = idx
   })
 })
 </script>
