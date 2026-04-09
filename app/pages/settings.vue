@@ -1,79 +1,153 @@
 <template>
-  <div class="flex-1 flex flex-col px-6 py-6 gap-6">
+  <div class="flex-1 flex flex-col px-6 py-6 gap-4 overflow-y-auto" style="max-height: calc(100vh - 52px);">
 
-    <div>
-      <h1 class="text-[15px] font-bold text-[#e0f0f5]">Options</h1>
-      <p class="text-[11px] text-[#4a7a8a] mt-1">Configuration générale de l'application.</p>
+    <!-- Overlay -->
+    <div class="flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-150"
+         style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06);">
+      <div>
+        <p class="text-[13px] font-bold text-[#c8ead8]">Overlay de compte</p>
+        <p class="text-[11px] text-[#3a7a5a] mt-0.5">
+          Affiche les comptes actifs en haut de l'écran.
+        </p>
+      </div>
+      <button
+          @click="toggleOverlay"
+          class="w-10 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0"
+          :class="overlayEnabled ? 'bg-[#5DCAA5]' : 'bg-[#1a3a2e]'"
+      >
+        <span
+            class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-200"
+            :class="overlayEnabled ? 'right-0.5' : 'left-0.5'"
+        />
+      </button>
     </div>
 
-    <div class="flex flex-col gap-4">
-
-      <!-- Overlay -->
-      <div class="flex items-center justify-between bg-[#122530] border border-[#1a3a4a]
-                  rounded-md px-4 py-3 hover:border-[#1eb8cc44] transition-colors">
-        <div>
-          <p class="text-[13px] font-bold text-[#c8e8f0]">Overlay de compte</p>
-          <p class="text-[11px] text-[#4a7a8a] mt-0.5">
-            Affiche le numéro du compte actif en haut de l'écran.
-          </p>
-        </div>
-        <button
-            @click="toggleOverlay"
-            class="w-10 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0"
-            :class="overlayEnabled ? 'bg-[#1eb8cc]' : 'bg-[#1a3a4a]'"
-        >
-          <span
-              class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-200"
-              :class="overlayEnabled ? 'right-0.5' : 'left-0.5'"
-          />
-        </button>
-      </div>
-
-      <!-- Touches -->
-      <div class="bg-[#122530] border border-[#1a3a4a] rounded-md px-4 py-3">
-        <p class="text-[13px] font-bold text-[#c8e8f0] mb-1">Touches de switch</p>
-        <p class="text-[11px] text-[#4a7a8a] mb-3">
+    <!-- Touches de switch -->
+    <div class="flex flex-col gap-3 px-4 py-3 rounded-xl"
+         style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06);">
+      <div>
+        <p class="text-[13px] font-bold text-[#c8ead8]">Touches de switch</p>
+        <p class="text-[11px] text-[#3a7a5a] mt-0.5">
           Appuyez sur "Modifier" puis sur la touche ou le bouton souris souhaité.
         </p>
+      </div>
 
-        <div class="flex flex-col gap-2">
-          <div v-for="binding in bindings" :key="binding.id"
-               class="flex items-center gap-3">
-            <span class="text-[11px] font-bold text-[#4a7a8a] uppercase tracking-wider w-24">
-              {{ binding.label }}
-            </span>
-            <span class="font-mono text-[12px] font-bold text-[#1eb8cc] bg-[#0f2a36]
-                         border border-[#1eb8cc33] rounded px-2 py-0.5 flex-1 text-center">
-              {{ binding.display }}
-            </span>
-            <button
-                @click="startCapture(binding.id)"
-                class="text-[11px] transition-colors uppercase tracking-wider"
-                :class="capturing === binding.id ? 'text-[#1eb8cc]' : 'text-[#2a6070] hover:text-[#1eb8cc]'"
-            >
-              {{ capturing === binding.id ? 'En attente...' : 'Modifier' }}
-            </button>
-          </div>
-        </div>
-
-        <div v-if="capturing"
-             class="mt-3 bg-[#0f2a36] border border-[#1eb8cc44] rounded p-3 text-center">
-          <p class="text-[#e0f0f5] text-[11px]">Appuyez sur une touche ou un bouton souris...</p>
-          <button @click="cancelCapture"
-                  class="mt-1 text-[10px] text-[#4a7a8a] hover:text-[#1eb8cc] transition-colors">
-            Annuler
+      <div class="flex flex-col gap-2">
+        <div v-for="binding in bindings" :key="binding.id"
+             class="flex items-center gap-3">
+          <span class="text-[11px] font-bold text-[#3a7a5a] uppercase tracking-wider w-24">
+            {{ binding.label }}
+          </span>
+          <span class="font-mono text-[12px] font-bold text-[#5DCAA5] flex-1 text-center
+                       rounded-lg px-2 py-1"
+                style="background: rgba(93,202,165,0.1); border: 1px solid rgba(93,202,165,0.2);">
+            {{ binding.display }}
+          </span>
+          <button
+              @click="startCapture(binding.id)"
+              class="text-[11px] transition-colors uppercase tracking-wider"
+              :class="capturing === binding.id ? 'text-[#5DCAA5]' : 'text-[#2a6a4e] hover:text-[#5DCAA5]'"
+          >
+            {{ capturing === binding.id ? 'En attente...' : 'Modifier' }}
           </button>
         </div>
+      </div>
 
+      <div v-if="capturing"
+           class="rounded-lg p-3 text-center"
+           style="background: rgba(93,202,165,0.08); border: 1px solid rgba(93,202,165,0.2);">
+        <p class="text-[#c8ead8] text-[11px]">Appuyez sur une touche ou un bouton souris...</p>
+        <button @click="cancelCapture"
+                class="mt-1 text-[10px] text-[#3a7a5a] hover:text-[#5DCAA5] transition-colors">
+          Annuler
+        </button>
+      </div>
+    </div>
+
+    <!-- Informations -->
+    <div class="flex flex-col gap-2 px-4 py-3 rounded-xl"
+         style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06);">
+      <p class="text-[13px] font-bold text-[#c8ead8]">Informations</p>
+
+      <div class="flex flex-col gap-1.5 mt-1">
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-[#3a7a5a] uppercase tracking-wider w-28">Application</span>
+          <span class="text-[11px] text-[#c8ead8] font-mono flex-1 truncate">{{ appDataPath }}</span>
+          <button
+              @click="openFolder('app')"
+              class="flex items-center justify-center rounded transition-all duration-150 flex-shrink-0"
+              style="width: 22px; height: 22px; background: rgba(93,202,165,0.1); border: 1px solid rgba(93,202,165,0.2);"
+              @mouseenter="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.25)'"
+              @mouseleave="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.1)'"
+              title="Ouvrir le dossier"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-[#3a7a5a] uppercase tracking-wider w-28">Préférences</span>
+          <span class="text-[11px] text-[#c8ead8] font-mono flex-1 truncate">{{ configPath }}</span>
+          <button
+              @click="openFolder('config')"
+              class="flex items-center justify-center rounded transition-all duration-150 flex-shrink-0"
+              style="width: 22px; height: 22px; background: rgba(93,202,165,0.1); border: 1px solid rgba(93,202,165,0.2);"
+              @mouseenter="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.25)'"
+              @mouseleave="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.1)'"
+              title="Ouvrir le dossier"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-[#3a7a5a] uppercase tracking-wider w-28">Version</span>
+          <span class="text-[11px] text-[#c8ead8] font-mono">v0.1.0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone danger -->
+    <div class="flex flex-col gap-3 px-4 py-3 rounded-xl mt-auto"
+         style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,60,60,0.45);">
+      <div>
+        <p class="text-[13px] font-bold text-[#ff8080]">Zone de danger</p>
+        <p class="text-[11px] text-[#8a5a5a] mt-0.5">
+          Ces actions sont irréversibles.
+        </p>
+      </div>
+
+      <div v-if="!confirmUninstall" class="flex gap-2">
         <button
-            @click="saveHotkeys"
-            class="mt-4 bg-[#1eb8cc] text-[#091820] font-bold text-[11px] tracking-widest
-                 rounded-full px-6 py-1.5 hover:bg-[#28d4e8] transition-colors"
+            @click="confirmUninstall = true"
+            class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold
+                   transition-all duration-150"
+            style="background: rgba(255,60,60,0.1); border: 1px solid rgba(255,60,60,0.25); color: #ff6b6b;"
+            @mouseenter="e => (e.currentTarget as HTMLElement).style.background='rgba(255,60,60,0.2)'"
+            @mouseleave="e => (e.currentTarget as HTMLElement).style.background='rgba(255,60,60,0.1)'"
         >
-          Enregistrer
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+          Désinstaller l'application
         </button>
       </div>
 
+      <div v-else class="flex items-center gap-3">
+        <span class="text-[11px] text-[#ff8080] font-bold flex-1">
+          Supprimer l'application et toutes les données ?
+        </span>
+        <button @click="uninstall"
+                class="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                style="background: rgba(255,60,60,0.2); border: 1px solid rgba(255,60,60,0.4); color: #ff6b6b;">
+          Confirmer
+        </button>
+        <button @click="confirmUninstall = false"
+                class="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: #3a7a5a;">
+          Annuler
+        </button>
+      </div>
     </div>
 
   </div>
@@ -86,6 +160,10 @@ import { load } from '@tauri-apps/plugin-store'
 
 const overlayEnabled = ref(true)
 const capturing = ref<string | null>(null)
+const confirmUninstall = ref(false)
+
+const appDataPath = ref('')
+const configPath = ref('')
 
 const bindings = ref([
   { id: 'next', label: 'Suivant',   display: 'Mouse5', value: { type: 'mouse', code: 2 } },
@@ -96,10 +174,13 @@ async function getStore() {
   return await load('settings.json')
 }
 
+async function openFolder(type: 'app' | 'config') {
+  await invoke('open_folder', { folderType: type })
+}
+
 onMounted(async () => {
   const store = await getStore()
 
-  // Charge uniquement pour afficher les valeurs sauvegardées dans l'UI
   const savedOverlay = await store.get<boolean>('overlayEnabled')
   if (savedOverlay !== null && savedOverlay !== undefined) {
     overlayEnabled.value = savedOverlay
@@ -110,7 +191,12 @@ onMounted(async () => {
     bindings.value = savedBindings
   }
 
-  // Listeners capture
+  // Chemins
+  const appData = await invoke<string>('get_app_paths')
+  const parts = appData.split('|')
+  appDataPath.value = parts[0] ?? ''
+  configPath.value = parts[1] ?? ''
+
   window.addEventListener('keydown', (e) => {
     if (!capturing.value) return
     e.preventDefault()
@@ -147,6 +233,7 @@ async function stopCapture(display: string, type: 'key' | 'mouse', code: number)
   capturing.value = null
   isCapturing.value = false
   await invoke('set_hook_enabled', { enabled: true })
+  await saveHotkeys()
 }
 
 async function cancelCapture() {
@@ -167,5 +254,9 @@ async function saveHotkeys() {
   const store = await getStore()
   await store.set('bindings', bindings.value)
   await store.save()
+}
+
+async function uninstall() {
+  await invoke('uninstall_app')
 }
 </script>
