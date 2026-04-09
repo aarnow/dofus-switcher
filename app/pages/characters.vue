@@ -1,164 +1,187 @@
 <template>
   <div class="flex-1 flex overflow-hidden">
 
-    <div class="flex-1 flex flex-col px-6 py-6 gap-4 overflow-y-auto">
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-[15px] font-bold text-[#e0f0f5]">Personnages</h1>
-          <p class="text-[11px] text-[#4a7a8a] mt-1">
-            Créez vos profils pour les associer automatiquement à vos clients.
-          </p>
+    <!-- Colonne gauche : liste -->
+    <div class="flex flex-col border-r flex-shrink-0"
+         style="width: 260px; border-color: rgba(255,255,255,0.06);">
+
+      <div class="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-1.5">
+        <div v-if="characters.length === 0"
+             class="flex-1 flex items-center justify-center text-[#1a4a3a] text-sm text-center px-4">
+          Aucun personnage.<br>Cliquez sur + pour en créer un.
         </div>
-        <button
-            @click="openForm()"
-            class="border border-[#1eb8cc] text-[#1eb8cc] text-[11px] font-bold
-                 tracking-wider rounded-full px-4 py-1.5 hover:bg-[#1eb8cc]
-                 hover:text-[#091820] transition-all duration-150"
-        >
-          + Nouveau
-        </button>
-      </div>
-
-      <div v-if="characters.length === 0"
-           class="flex-1 flex items-center justify-center text-[#2a5060] text-sm">
-        Aucun personnage créé
-      </div>
-
-      <div class="flex flex-col gap-2">
         <CharacterRow
             v-for="char in characters"
             :key="char.id"
             :char="char"
-            :deletable="true"
-            @click="openForm(char)"
-            @delete="deleteCharacter(char.id)"
+            :selected="selectedId === char.id"
+            @click="selectCharacter(char)"
         />
+      </div>
+
+      <!-- Boutons bas -->
+      <div class="flex gap-2 px-3 py-3 border-t flex-shrink-0"
+           style="border-color: rgba(255,255,255,0.06);">
+        <button
+            @click="createNew"
+            class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg
+                   text-[11px] font-bold tracking-wider transition-all duration-150"
+            style="background: rgba(93,202,165,0.15); border: 1px solid rgba(93,202,165,0.3); color: #5DCAA5;"
+            @mouseenter="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.25)'"
+            @mouseleave="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.15)'"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nouveau
+        </button>
+        <button
+            v-if="selectedId"
+            @click="confirmDelete = true"
+            class="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+                   text-[11px] font-bold transition-all duration-150"
+            style="background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.2); color: #ff6b6b;"
+            @mouseenter="e => (e.currentTarget as HTMLElement).style.background='rgba(255,80,80,0.2)'"
+            @mouseleave="e => (e.currentTarget as HTMLElement).style.background='rgba(255,80,80,0.1)'"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          Supprimer
+        </button>
+      </div>
+
+      <!-- Confirmation suppression -->
+      <div v-if="confirmDelete"
+           class="px-3 pb-3 flex items-center gap-2">
+        <span class="text-[10px] text-[#ff6b6b] font-bold flex-1">Supprimer ce personnage ?</span>
+        <button @click="deleteSelected"
+                class="text-[9px] font-bold px-2 py-1 rounded"
+                style="background: rgba(255,80,80,0.2); border: 1px solid rgba(255,80,80,0.4); color: #ff6b6b;">
+          Oui
+        </button>
+        <button @click="confirmDelete = false"
+                class="text-[9px] font-bold px-2 py-1 rounded"
+                style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #3a7a5a;">
+          Non
+        </button>
       </div>
     </div>
 
-    <transition name="slide">
-      <div v-if="showForm"
-           class="w-72 bg-[#091820] border-l border-[#0f2a36] flex flex-col overflow-y-auto">
+    <!-- Colonne droite : détail / édition -->
+    <div class="flex-1 flex flex-col overflow-y-auto">
 
-        <div class="px-5 py-4 border-b border-[#0f2a36] flex items-center justify-between">
-          <span class="text-[13px] font-bold text-[#e0f0f5]">
-            {{ editingChar ? 'Modifier' : 'Nouveau personnage' }}
-          </span>
-          <button @click="showForm = false" class="text-[#2a5060] hover:text-[#e0f0f5]">✕</button>
-        </div>
+      <div v-if="!form" class="flex-1 flex items-center justify-center">
+        <p class="text-[#1a4a3a] text-sm">Sélectionnez ou créez un personnage</p>
+      </div>
 
-        <div class="flex flex-col gap-4 px-5 py-4">
+      <div v-else class="flex flex-col gap-5 px-6 py-6">
 
-          <div class="flex justify-center">
-            <div
-                class="w-16 h-16 rounded-full overflow-hidden border-2 flex items-center justify-center"
-                :style="{ borderColor: classColor(form.classe) || '#1a3a4a' }"
-            >
-              <img
-                  v-if="form.classe && classImage(form.classe)"
-                  :src="classImage(form.classe)"
-                  :alt="form.classe"
-                  class="w-full h-full object-cover"
-              />
-              <span v-else class="text-lg font-bold" :style="{ color: classColor(form.classe) || '#4a7a8a' }">
-                {{ form.pseudo ? form.pseudo.slice(0, 2).toUpperCase() : '?' }}
-              </span>
+        <!-- Avatar + pseudo -->
+        <div class="flex items-center gap-4">
+          <div
+              class="w-16 h-16 rounded-full overflow-hidden border-2 flex-shrink-0"
+              :style="{ borderColor: classColor(form.classe) || '#1a4a3a' }"
+          >
+            <img
+                v-if="form.classe && classImage(form.classe)"
+                :src="classImage(form.classe)"
+                :alt="form.classe"
+                class="w-full h-full object-cover"
+            />
+            <div v-else class="w-full h-full flex items-center justify-center text-xl font-bold"
+                 :style="{ color: classColor(form.classe) || '#3a7a5a', background: 'rgba(0,0,0,0.3)' }">
+              {{ form.pseudo ? form.pseudo.slice(0, 2).toUpperCase() : '?' }}
             </div>
           </div>
-
-          <div>
-            <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider">Pseudo</label>
+          <div class="flex-1">
+            <label class="text-[10px] font-bold text-[#3a7a5a] uppercase tracking-wider">Pseudo</label>
             <input
                 v-model="form.pseudo"
+                @input="autoSave"
                 placeholder="Nom du personnage"
-                class="mt-1 w-full bg-[#0d1f26] border border-[#1a3a4a] rounded px-3 py-2
-                     text-[13px] text-[#e0f0f5] outline-none focus:border-[#1eb8cc]
-                     transition-colors placeholder-[#2a5060]"
+                class="mt-1 w-full rounded-lg px-3 py-2 text-[13px] font-bold text-[#c8ead8]
+                       outline-none transition-colors"
+                style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);"
+                @focus="e => (e.target as HTMLElement).style.borderColor='rgba(93,202,165,0.4)'"
+                @blur="e => (e.target as HTMLElement).style.borderColor='rgba(255,255,255,0.08)'"
             />
           </div>
-
-          <div>
-            <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider">Classe</label>
-            <select
-                v-model="form.classe"
-                class="mt-1 w-full bg-[#0d1f26] border border-[#1a3a4a] rounded px-3 py-2
-                     text-[13px] text-[#e0f0f5] outline-none focus:border-[#1eb8cc] transition-colors"
-            >
-              <option value="">Sélectionner...</option>
-              <option v-for="c in classes" :key="c" :value="c">{{ c }}</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider mb-2 block">
-              Éléments
-            </label>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                  v-for="(el, name) in ELEMENTS" :key="name"
-                  @click="toggleSelection(form.elements, name)"
-                  class="flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold border transition-all"
-                  :style="form.elements.includes(name)
-                    ? { background: el.color + '33', borderColor: el.color, color: el.color }
-                    : { background: 'transparent', borderColor: '#1a3a4a', color: '#4a7a8a' }"
-              >
-                <img :src="el.image" :alt="name" class="w-4 h-4 object-contain" />
-                {{ name }}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider mb-2 block">
-              Rôles
-            </label>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                  v-for="(role, name) in ROLES" :key="name"
-                  @click="toggleSelection(form.roles, name)"
-                  class="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border transition-all"
-                  :class="form.roles.includes(name)
-                    ? 'bg-[#1eb8cc33] border-[#1eb8cc] text-[#1eb8cc]'
-                    : 'bg-transparent border-[#1a3a4a] text-[#4a7a8a] hover:border-[#2a5a6a]'"
-              >
-                <img :src="role.image" :alt="name" class="w-4 h-4 object-contain" />
-                {{ name }}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider flex items-center gap-1.5">
-              <img src="/icons/initiative.png" alt="initiative" class="w-4 h-4 object-contain opacity-70" />
-              Initiative
-            </label>
-            <input
-                v-model.number="form.initiative"
-                type="number"
-                min="0"
-                placeholder="0"
-                class="mt-1 w-full bg-[#0d1f26] border border-[#1a3a4a] rounded px-3 py-2
-                     text-[13px] text-[#e0f0f5] outline-none focus:border-[#1eb8cc]
-                     transition-colors placeholder-[#2a5060]"
-            />
-          </div>
-
         </div>
 
-        <div class="mt-auto px-5 py-4 border-t border-[#0f2a36]">
-          <button
-              @click="saveCharacter"
-              :disabled="!form.pseudo"
-              class="w-full bg-[#1eb8cc] text-[#091820] font-bold text-[11px] tracking-widest
-                   rounded-full py-2 hover:bg-[#28d4e8] transition-colors disabled:opacity-40
-                   disabled:cursor-not-allowed"
+        <div class="w-full h-px" style="background: rgba(255,255,255,0.05);"/>
+
+        <!-- Classe -->
+        <div>
+          <label class="text-[10px] font-bold text-[#3a7a5a] uppercase tracking-wider">Classe</label>
+          <select
+              v-model="form.classe"
+              @change="autoSave"
+              class="mt-1 w-full rounded-lg px-3 py-2 text-[13px] text-[#c8ead8] outline-none transition-colors"
+              style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);"
           >
-            {{ editingChar ? 'Mettre à jour' : 'Créer' }}
-          </button>
+            <option value="">Sélectionner...</option>
+            <option v-for="c in classes" :key="c" :value="c">{{ c }}</option>
+          </select>
+        </div>
+
+        <!-- Initiative -->
+        <div>
+          <label class="text-[10px] font-bold text-[#3a7a5a] uppercase tracking-wider flex items-center gap-1.5">
+            <img src="/icons/initiative.png" alt="initiative" class="w-3.5 h-3.5 object-contain opacity-70" />
+            Initiative
+          </label>
+          <input
+              v-model.number="form.initiative"
+              @input="autoSave"
+              type="number"
+              min="0"
+              placeholder="0"
+              class="mt-1 w-full rounded-lg px-3 py-2 text-[13px] text-[#C268D7] font-bold outline-none transition-colors"
+              style="background: rgba(194,104,215,0.08); border: 1px solid rgba(194,104,215,0.2);"
+              @focus="e => (e.target as HTMLElement).style.borderColor='rgba(194,104,215,0.5)'"
+              @blur="e => (e.target as HTMLElement).style.borderColor='rgba(194,104,215,0.2)'"
+          />
+        </div>
+
+        <div class="w-full h-px" style="background: rgba(255,255,255,0.05);"/>
+
+        <!-- Éléments -->
+        <div>
+          <label class="text-[10px] font-bold text-[#3a7a5a] uppercase tracking-wider mb-2 block">Éléments</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+                v-for="(el, name) in ELEMENTS" :key="name"
+                @click="toggleSelection(form.elements, name); autoSave()"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold border transition-all"
+                :style="form.elements.includes(name)
+                  ? { background: el.color + '22', borderColor: el.color, color: el.color }
+                  : { background: 'rgba(0,0,0,0.2)', borderColor: 'rgba(255,255,255,0.08)', color: '#3a7a5a' }"
+            >
+              <img :src="el.image" :alt="name" class="w-4 h-4 object-contain" />
+              {{ name }}
+            </button>
+          </div>
+        </div>
+
+        <div class="w-full h-px" style="background: rgba(255,255,255,0.05);"/>
+
+        <!-- Rôles -->
+        <div>
+          <label class="text-[10px] font-bold text-[#3a7a5a] uppercase tracking-wider mb-2 block">Rôles</label>
+          <div class="flex flex-wrap gap-2">
+            <button
+                v-for="(role, name) in ROLES" :key="name"
+                @click="toggleSelection(form.roles, name); autoSave()"
+                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all"
+                :style="form.roles.includes(name)
+                  ? { background: 'rgba(93,202,165,0.15)', borderColor: 'rgba(93,202,165,0.4)', color: '#5DCAA5' }
+                  : { background: 'rgba(0,0,0,0.2)', borderColor: 'rgba(255,255,255,0.08)', color: '#3a7a5a' }"
+            >
+              <img :src="role.image" :alt="name" class="w-4 h-4 object-contain" />
+              {{ name }}
+            </button>
+          </div>
         </div>
 
       </div>
-    </transition>
+    </div>
 
   </div>
 </template>
@@ -170,18 +193,11 @@ import type { Character } from '~/composables/useCharacters'
 
 const classes = Object.keys(CLASSES).sort()
 const characters = ref<Character[]>([])
-const showForm = ref(false)
-const editingChar = ref<Character | null>(null)
+const selectedId = ref<string | null>(null)
+const confirmDelete = ref(false)
+const form = ref<Character | null>(null)
 
-const emptyForm = () => ({
-  pseudo: '',
-  classe: '',
-  elements: [] as string[],
-  roles: [] as string[],
-  initiative: 0,
-})
-
-const form = ref(emptyForm())
+let saveTimer: ReturnType<typeof setTimeout> | null = null
 
 async function getStore() {
   return await load('settings.json')
@@ -190,18 +206,29 @@ async function getStore() {
 onMounted(async () => {
   const store = await getStore()
   const saved = await store.get<Character[]>('characters')
-  if (saved && saved.length > 0) characters.value = saved
+  if (saved && saved.length > 0) {
+    characters.value = saved
+    if (characters.value[0]) selectCharacter(characters.value[0])
+  }
 })
 
-function openForm(char?: Character) {
-  if (char) {
-    editingChar.value = char
-    form.value = { ...char, elements: [...char.elements], roles: [...char.roles] }
-  } else {
-    editingChar.value = null
-    form.value = emptyForm()
+function selectCharacter(char: Character) {
+  selectedId.value = char.id
+  form.value = { ...char, elements: [...char.elements], roles: [...char.roles] }
+  confirmDelete.value = false
+}
+
+function createNew() {
+  const newChar: Character = {
+    id: crypto.randomUUID(),
+    pseudo: '',
+    classe: '',
+    elements: [],
+    roles: [],
+    initiative: 0,
   }
-  showForm.value = true
+  characters.value.push(newChar)
+  selectCharacter(newChar)
 }
 
 function toggleSelection(arr: string[], item: string) {
@@ -210,35 +237,30 @@ function toggleSelection(arr: string[], item: string) {
   else arr.splice(idx, 1)
 }
 
-async function saveCharacter() {
-  if (!form.value.pseudo) return
-  const store = await getStore()
+function autoSave() {
+  if (!form.value) return
+  const idx = characters.value.findIndex(c => c.id === form.value!.id)
+  if (idx !== -1) characters.value[idx] = { ...form.value }
 
-  if (editingChar.value) {
-    const idx = characters.value.findIndex(c => c.id === editingChar.value!.id)
-    if (idx !== -1) characters.value[idx] = { ...form.value, id: editingChar.value.id }
-  } else {
-    characters.value.push({ ...form.value, id: crypto.randomUUID() })
-  }
-
-  await store.set('characters', characters.value)
-  await store.save()
-  showForm.value = false
+  if (saveTimer) clearTimeout(saveTimer)
+  saveTimer = setTimeout(async () => {
+    const store = await getStore()
+    await store.set('characters', characters.value)
+    await store.save()
+  }, 500)
 }
 
-async function deleteCharacter(id: string) {
-  characters.value = characters.value.filter(c => c.id !== id)
+async function deleteSelected() {
+  if (!selectedId.value) return
+  characters.value = characters.value.filter(c => c.id !== selectedId.value)
   const store = await getStore()
   await store.set('characters', characters.value)
   await store.save()
+
+  selectedId.value = null
+  form.value = null
+  confirmDelete.value = false
+
+  if (characters.value[0]) selectCharacter(characters.value[0])
 }
 </script>
-
-<style scoped>
-.slide-enter-active, .slide-leave-active {
-  transition: transform 0.2s ease;
-}
-.slide-enter-from, .slide-leave-to {
-  transform: translateX(100%);
-}
-</style>

@@ -4,3 +4,18 @@
     scrollbar-width: thin;
     scrollbar-color: #1a4a3a transparent;
 }
+
+select option {
+    background: #0f2d26;
+    color: #c8ead8;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
