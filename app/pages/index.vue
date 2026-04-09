@@ -3,29 +3,29 @@
 
     <div class="flex items-start justify-between px-6 pt-6 pb-4 gap-4">
       <div>
-        <h1 class="text-[15px] font-bold text-[#e0f0f5]">Gérer vos comptes</h1>
-        <p class="text-[11px] text-[#4a7a8a] mt-1 leading-relaxed">
+        <h1 class="text-[15px] font-bold text-[#e0f5ee]">Gérer vos comptes</h1>
+        <p class="text-[11px] text-[#3a7a5a] mt-1 leading-relaxed">
           Activez ou désactivez chaque compte.<br>
           Cliquez sur un compte pour l'amener au premier plan.
         </p>
       </div>
       <button
           @click="refresh"
-          class="flex-shrink-0 border border-[#1eb8cc] text-[#1eb8cc] text-[11px] font-bold
-               tracking-wider rounded-full px-4 py-1.5 hover:bg-[#1eb8cc] hover:text-[#091820]
+          class="flex-shrink-0 border border-[#5DCAA5] text-[#5DCAA5] text-[11px] font-bold
+               tracking-wider rounded-full px-4 py-1.5 hover:bg-[#5DCAA5] hover:text-[#0a1e1a]
                transition-all duration-150"
       >
         Actualiser
       </button>
     </div>
 
-    <div class="flex justify-end px-6 mb-2">
-      <span class="text-[13px] font-bold text-[#1eb8cc]">
+    <div class="flex justify-end px-6 mb-5">
+      <span class="text-[13px] font-bold text-[#5DCAA5]">
         {{ enabledCount }} / {{ accounts.length }}
       </span>
     </div>
 
-    <div class="flex-1 overflow-y-auto px-6 pb-4 flex flex-col gap-1.5">
+    <div class="flex-1 px-6 py-2 flex flex-col gap-3">
       <AccountRow
           v-for="(acc, i) in accounts"
           :key="acc.hwnd"
@@ -38,7 +38,7 @@
           @toggle="toggleAccount(acc.hwnd, !acc.enabled); acc.enabled = !acc.enabled"
       />
       <div v-if="accounts.length === 0"
-           class="flex-1 flex items-center justify-center text-[#2a5060] text-sm">
+           class="flex-1 flex items-center justify-center text-[#1a4a3a] text-sm">
         Aucun client Dofus détecté
       </div>
     </div>
@@ -71,16 +71,11 @@ function getCharacterForAccount(title: string): Character | null {
 async function refresh() {
   characters.value = await getCharacters()
   const detected = await invoke<Account[]>('detect_windows')
-
-  // Trie par initiative décroissante selon le personnage associé
   accounts.value = detected.sort((a, b) => {
     const charA = matchCharacter(a.title, characters.value)
     const charB = matchCharacter(b.title, characters.value)
-    const initA = charA?.initiative ?? 0
-    const initB = charB?.initiative ?? 0
-    return initB - initA
+    return (charB?.initiative ?? 0) - (charA?.initiative ?? 0)
   })
-
   activeIndex.value = 0
 }
 

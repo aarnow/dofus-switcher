@@ -21,7 +21,7 @@ unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
         let len = GetWindowTextW(hwnd, &mut buf);
         if len > 0 {
             let title = String::from_utf16_lossy(&buf[..len as usize]);
-            if title.contains("Dofus") || title.contains("Release") {
+            if title == "Dofus" || title.contains("- Release") {
                 windows.push(GameWindow {
                     hwnd: hwnd.0 as isize,
                     title,

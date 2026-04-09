@@ -97,8 +97,9 @@ fn resize_overlay(handle: tauri::AppHandle, count: u32) {
     if let Some(w) = handle.get_webview_window("overlay") {
         let item_w = 74i32;
         let gap = 8i32;
+        let btn_w = 56i32; // bouton 48px + gap
         let padding = 16i32;
-        let overlay_w = (item_w * count as i32) + (gap * (count as i32 - 1)) + padding;
+        let overlay_w = btn_w + (item_w * count as i32) + (gap * count as i32) + padding;
         let overlay_h = 88i32;
 
         use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN};
@@ -124,6 +125,51 @@ fn set_hook_enabled(enabled: bool) {
 #[tauri::command]
 fn quit(handle: tauri::AppHandle) {
     handle.exit(0);
+}
+
+#[tauri::command]
+fn show_main_window(state: State<AppState>, handle: tauri::AppHandle) {
+    use windows::Win32::Graphics::Gdi::{
+        MonitorFromWindow, GetMonitorInfoW, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+    };
+
+    if let Some(w) = handle.get_webview_window("main") {
+        let s = state.0.lock().unwrap();
+        let active = s.active_accounts();
+
+        if let Some(&hwnd) = active.get(s.current_index) {
+            unsafe {
+                let hwnd_win = windows::Win32::Foundation::HWND(hwnd as *mut _);
+                let monitor = MonitorFromWindow(hwnd_win, MONITOR_DEFAULTTONEAREST);
+
+                let mut info = MONITORINFO {
+                    cbSize: std::mem::size_of::<MONITORINFO>() as u32,
+                    ..Default::default()
+                };
+
+                if GetMonitorInfoW(monitor, &mut info).as_bool() {
+                    let mx = info.rcWork.left;
+                    let my = info.rcWork.top;
+                    let mw = info.rcWork.right - info.rcWork.left;
+                    let mh = info.rcWork.bottom - info.rcWork.top;
+
+                    let win_w = 800i32;
+                    let win_h = 600i32;
+                    let x = mx + (mw - win_w) / 2;
+                    let y = my + (mh - win_h) / 2;
+
+                    let _ = w.set_position(tauri::Position::Physical(
+                        tauri::PhysicalPosition { x, y }
+                    ));
+                }
+            }
+        } else {
+            let _ = w.center();
+        }
+
+        let _ = w.show();
+        let _ = w.set_focus();
+    }
 }
 
 fn open_overlay(handle: &tauri::AppHandle) {
@@ -186,6 +232,7 @@ fn main() {
             toggle_overlay,
             resize_overlay,
             set_hook_enabled,
+            show_main_window,
             quit
         ])
         .run(tauri::generate_context!())
