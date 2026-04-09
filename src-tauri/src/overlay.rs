@@ -12,22 +12,24 @@ pub fn open_overlay(handle: &tauri::AppHandle) {
     let overlay_h = 88i32;
     let x = (screen_width / 2) - (overlay_w / 2);
 
-    let _ = WebviewWindowBuilder::new(
-        handle,
-        "overlay",
-        WebviewUrl::External("http://localhost:3000/overlay".parse().unwrap()),
-    )
-    .title("")
-    .inner_size(overlay_w as f64, overlay_h as f64)
-    .position(x as f64, 12.0)
-    .decorations(false)
-    .transparent(true)
-    .always_on_top(true)
-    .skip_taskbar(true)
-    .resizable(false)
-    .shadow(false)
-    .visible(true)
-    .build();
+    #[cfg(debug_assertions)]
+    let url = WebviewUrl::External("http://localhost:3000/overlay".parse().unwrap());
+
+    #[cfg(not(debug_assertions))]
+    let url = WebviewUrl::App("overlay".into());
+
+    let _ = WebviewWindowBuilder::new(handle, "overlay", url)
+        .title("")
+        .inner_size(overlay_w as f64, overlay_h as f64)
+        .position(x as f64, 12.0)
+        .decorations(false)
+        .transparent(true)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .resizable(false)
+        .shadow(false)
+        .visible(true)
+        .build();
 }
 
 #[tauri::command]

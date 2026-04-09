@@ -34,7 +34,7 @@ pub fn uninstall_app(handle: tauri::AppHandle) {
 
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
-            let uninstaller = dir.join("..\\unins000.exe");
+            let uninstaller = dir.join("uninstall.exe");
             if uninstaller.exists() {
                 let _ = std::process::Command::new(uninstaller).spawn();
             }
