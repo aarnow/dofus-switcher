@@ -9,15 +9,18 @@
     >
       <div
           data-tauri-drag-region
-          class="flex flex-col pointer-events-none"
+          class="flex items-center gap-2 pointer-events-none"
           style="min-width: 160px;"
       >
-        <span class="text-[16px] font-bold uppercase tracking-wider" style="color: #e0f5ee;">
-          Dofus Switcher
-        </span>
-        <span class="text-[10px] tracking-wider" style="color: #51b88e;">
-          v0.1.0
-        </span>
+        <img src="/dofusheros.png" alt="logo" class="w-12 h-12 object-contain" />
+        <div class="flex flex-col">
+          <span class="text-[13px] font-bold uppercase tracking-wider" style="color: #e0f5ee;">
+            Dofus - Heros
+          </span>
+          <span class="text-[10px] tracking-wider" style="color: #51b88e;">
+            v0.1.0
+          </span>
+        </div>
       </div>
 
       <div data-tauri-drag-region class="flex-1 flex items-center justify-center">

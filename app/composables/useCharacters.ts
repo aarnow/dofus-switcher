@@ -58,18 +58,12 @@ export const ELEMENTS: Record<string, { color: string; image: string }> = {
     'Sagesse': { color: '#AFA9EC', image: '/elements/sagesse.png' },
 }
 
-export const INITIATIVE_ICON = '/icons/initiative.png'
-
 export function roleImage(role: string): string {
     return ROLES[role]?.image ?? ''
 }
 
 export function elementImage(element: string): string {
     return ELEMENTS[element]?.image ?? ''
-}
-
-export function elementColor(element: string): string {
-    return ELEMENTS[element]?.color ?? '#1eb8cc'
 }
 
 export async function getCharacters(): Promise<Character[]> {

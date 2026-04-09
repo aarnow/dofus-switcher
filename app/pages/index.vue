@@ -25,7 +25,7 @@
       </span>
     </div>
 
-    <div class="flex-1 px-6 py-2 flex flex-col gap-3">
+    <div class="flex-1 px-6 py-2 flex flex-col gap-3 overflow-y-auto">
       <AccountRow
           v-for="(acc, i) in accounts"
           :key="acc.hwnd"
@@ -37,10 +37,9 @@
           @click="focusAccount(acc.hwnd, i)"
           @toggle="toggleAccount(acc.hwnd, !acc.enabled); acc.enabled = !acc.enabled"
       />
-      <div v-if="accounts.length === 0"
-           class="flex-1 flex items-center justify-center text-[#1a4a3a] text-sm">
+      <EmptyState v-if="accounts.length === 0">
         Aucun client Dofus détecté
-      </div>
+      </EmptyState>
     </div>
 
   </div>
@@ -77,6 +76,7 @@ async function refresh() {
     return (charB?.initiative ?? 0) - (charA?.initiative ?? 0)
   })
   activeIndex.value = 0
+  await invoke('reorder_accounts', { hwnds: accounts.value.map(a => a.hwnd) })
 }
 
 async function focusAccount(hwnd: number, index: number) {

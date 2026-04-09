@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "dofus-switcher",
+  "productName": "Dofus - Heros",
   "version": "0.1.0",
   "identifier": "com.dofusswitcher.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "dofus-switcher",
+        "title": "Dofus - Heros",
         "width": 800,
         "height": 720,
         "resizable": true,

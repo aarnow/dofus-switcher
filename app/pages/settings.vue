@@ -2,56 +2,24 @@
   <div class="flex-1 flex flex-col px-6 py-6 gap-4 overflow-y-auto" style="max-height: calc(100vh - 52px);">
 
     <!-- Overlay -->
-    <div class="flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-150"
-         style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06);">
-      <div>
-        <p class="text-[13px] font-bold text-[#c8ead8]">Overlay de compte</p>
-        <p class="text-[11px] text-[#3a7a5a] mt-0.5">
-          Affiche les comptes actifs en haut de l'écran.
-        </p>
-      </div>
-      <button
-          @click="toggleOverlay"
-          class="w-10 h-5 rounded-full transition-colors duration-200 relative flex-shrink-0"
-          :class="overlayEnabled ? 'bg-[#5DCAA5]' : 'bg-[#1a3a2e]'"
-      >
-        <span
-            class="absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-200"
-            :class="overlayEnabled ? 'right-0.5' : 'left-0.5'"
-        />
-      </button>
-    </div>
+    <SettingCard>
+      <SettingRow title="Overlay de compte" description="Affiche les comptes actifs en haut de l'écran.">
+        <AppToggle v-model="overlayEnabled" @update:modelValue="toggleOverlay" />
+      </SettingRow>
+    </SettingCard>
 
-    <!-- Touches de switch -->
-    <div class="flex flex-col gap-3 px-4 py-3 rounded-xl"
-         style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06);">
-      <div>
-        <p class="text-[13px] font-bold text-[#c8ead8]">Touches de switch</p>
-        <p class="text-[11px] text-[#3a7a5a] mt-0.5">
-          Appuyez sur "Modifier" puis sur la touche ou le bouton souris souhaité.
-        </p>
-      </div>
+    <!-- Touches -->
+    <SettingCard>
+      <SettingRow title="Touches de switch" description="Appuyez sur &quot;Modifier&quot; puis sur la touche ou le bouton souris souhaité." />
 
-      <div class="flex flex-col gap-2">
-        <div v-for="binding in bindings" :key="binding.id"
-             class="flex items-center gap-3">
-          <span class="text-[11px] font-bold text-[#3a7a5a] uppercase tracking-wider w-24">
-            {{ binding.label }}
-          </span>
-          <span class="font-mono text-[12px] font-bold text-[#5DCAA5] flex-1 text-center
-                       rounded-lg px-2 py-1"
-                style="background: rgba(93,202,165,0.1); border: 1px solid rgba(93,202,165,0.2);">
-            {{ binding.display }}
-          </span>
-          <button
-              @click="startCapture(binding.id)"
-              class="text-[11px] transition-colors uppercase tracking-wider"
-              :class="capturing === binding.id ? 'text-[#5DCAA5]' : 'text-[#2a6a4e] hover:text-[#5DCAA5]'"
-          >
-            {{ capturing === binding.id ? 'En attente...' : 'Modifier' }}
-          </button>
-        </div>
-      </div>
+      <HotkeyBinding
+          v-for="binding in bindings"
+          :key="binding.id"
+          :label="binding.label"
+          :display="binding.display"
+          :capturing="capturing === binding.id"
+          @capture="startCapture(binding.id)"
+      />
 
       <div v-if="capturing"
            class="rounded-lg p-3 text-center"
@@ -62,88 +30,63 @@
           Annuler
         </button>
       </div>
-    </div>
+    </SettingCard>
 
     <!-- Informations -->
-    <div class="flex flex-col gap-2 px-4 py-3 rounded-xl"
-         style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06);">
+    <SettingCard>
       <p class="text-[13px] font-bold text-[#c8ead8]">Informations</p>
-
       <div class="flex flex-col gap-1.5 mt-1">
-        <div class="flex items-center gap-2">
-          <span class="text-[10px] text-[#3a7a5a] uppercase tracking-wider w-28">Application</span>
-          <span class="text-[11px] text-[#c8ead8] font-mono flex-1 truncate">{{ appDataPath }}</span>
+        <div v-for="info in infos" :key="info.label" class="flex items-center gap-2">
+          <span class="text-[10px] text-[#3a7a5a] uppercase tracking-wider w-28">{{ info.label }}</span>
+          <span class="text-[11px] text-[#c8ead8] font-mono flex-1 truncate">{{ info.value }}</span>
           <button
-              @click="openFolder('app')"
+              v-if="info.folder"
+              @click="openFolder(info.folder)"
               class="flex items-center justify-center rounded transition-all duration-150 flex-shrink-0"
               style="width: 22px; height: 22px; background: rgba(93,202,165,0.1); border: 1px solid rgba(93,202,165,0.2);"
               @mouseenter="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.25)'"
               @mouseleave="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.1)'"
-              title="Ouvrir le dossier"
           >
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
             </svg>
           </button>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-[10px] text-[#3a7a5a] uppercase tracking-wider w-28">Préférences</span>
-          <span class="text-[11px] text-[#c8ead8] font-mono flex-1 truncate">{{ configPath }}</span>
-          <button
-              @click="openFolder('config')"
-              class="flex items-center justify-center rounded transition-all duration-150 flex-shrink-0"
-              style="width: 22px; height: 22px; background: rgba(93,202,165,0.1); border: 1px solid rgba(93,202,165,0.2);"
-              @mouseenter="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.25)'"
-              @mouseleave="e => (e.currentTarget as HTMLElement).style.background='rgba(93,202,165,0.1)'"
-              title="Ouvrir le dossier"
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-            </svg>
-          </button>
-        </div>
-        <div class="flex items-center gap-2">
-          <span class="text-[10px] text-[#3a7a5a] uppercase tracking-wider w-28">Version</span>
-          <span class="text-[11px] text-[#c8ead8] font-mono">v0.1.0</span>
         </div>
       </div>
-    </div>
+    </SettingCard>
 
     <!-- Zone danger -->
     <div class="flex flex-col gap-3 px-4 py-3 rounded-xl mt-auto"
          style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,60,60,0.45);">
       <div>
         <p class="text-[13px] font-bold text-[#ff8080]">Zone de danger</p>
-        <p class="text-[11px] text-[#8a5a5a] mt-0.5">
-          Ces actions sont irréversibles.
-        </p>
+        <p class="text-[11px] text-[#8a5a5a] mt-0.5">Ces actions sont irréversibles.</p>
       </div>
 
-      <div v-if="!confirmUninstall" class="flex gap-2">
+      <div v-if="!confirmUninstall">
         <button
             @click="confirmUninstall = true"
-            class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold
-                   transition-all duration-150"
+            class="flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-bold transition-all duration-150"
             style="background: rgba(255,60,60,0.1); border: 1px solid rgba(255,60,60,0.25); color: #ff6b6b;"
             @mouseenter="e => (e.currentTarget as HTMLElement).style.background='rgba(255,60,60,0.2)'"
             @mouseleave="e => (e.currentTarget as HTMLElement).style.background='rgba(255,60,60,0.1)'"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/>
+          </svg>
           Désinstaller l'application
         </button>
       </div>
 
       <div v-else class="flex items-center gap-3">
-        <span class="text-[11px] text-[#ff8080] font-bold flex-1">
-          Supprimer l'application et toutes les données ?
-        </span>
+        <span class="text-[11px] text-[#ff8080] font-bold flex-1">Supprimer l'application et toutes les données ?</span>
         <button @click="uninstall"
-                class="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                class="text-[10px] font-bold px-3 py-1.5 rounded-lg"
                 style="background: rgba(255,60,60,0.2); border: 1px solid rgba(255,60,60,0.4); color: #ff6b6b;">
           Confirmer
         </button>
         <button @click="confirmUninstall = false"
-                class="text-[10px] font-bold px-3 py-1.5 rounded-lg transition-colors"
+                class="text-[10px] font-bold px-3 py-1.5 rounded-lg"
                 style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: #3a7a5a;">
           Annuler
         </button>
@@ -162,12 +105,15 @@ const overlayEnabled = ref(true)
 const capturing = ref<string | null>(null)
 const confirmUninstall = ref(false)
 
-const appDataPath = ref('')
-const configPath = ref('')
-
 const bindings = ref([
   { id: 'next', label: 'Suivant',   display: 'Mouse5', value: { type: 'mouse', code: 2 } },
   { id: 'prev', label: 'Précédent', display: 'Mouse4', value: { type: 'mouse', code: 1 } },
+])
+
+const infos = ref([
+  { label: 'Application', value: '', folder: 'app' as const },
+  { label: 'Préférences', value: '', folder: 'config' as const },
+  { label: 'Version',     value: 'v0.1.0', folder: null },
 ])
 
 async function getStore() {
@@ -191,16 +137,15 @@ onMounted(async () => {
     bindings.value = savedBindings
   }
 
-  // Chemins
   const appData = await invoke<string>('get_app_paths')
   const parts = appData.split('|')
-  appDataPath.value = parts[0] ?? ''
-  configPath.value = parts[1] ?? ''
+  if(infos.value[0]) infos.value[0].value = parts[0] ?? ''
+  if(infos.value[1]) infos.value[1].value = parts[1] ?? ''
 
   window.addEventListener('keydown', (e) => {
     if (!capturing.value) return
     e.preventDefault()
-    stopCapture(e.key.toUpperCase(), 'key', e.keyCode)
+    stopCapture(e.key.toUpperCase(), 'key', e.code)
   })
 
   window.addEventListener('mousedown', (e) => {
@@ -211,7 +156,6 @@ onMounted(async () => {
 })
 
 async function toggleOverlay() {
-  overlayEnabled.value = !overlayEnabled.value
   await invoke('toggle_overlay', { enabled: overlayEnabled.value })
   const store = await getStore()
   await store.set('overlayEnabled', overlayEnabled.value)
