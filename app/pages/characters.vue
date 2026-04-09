@@ -25,49 +25,14 @@
       </div>
 
       <div class="flex flex-col gap-2">
-        <div
+        <CharacterRow
             v-for="char in characters"
             :key="char.id"
-            class="flex items-center gap-3 px-4 py-3 bg-[#122530] border border-[#1a3a4a]
-                 rounded-md hover:border-[#2a5a6a] transition-colors cursor-pointer"
+            :char="char"
+            :deletable="true"
             @click="openForm(char)"
-        >
-          <div
-              class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center
-                     border flex-shrink-0"
-              :style="{ borderColor: classColor(char.classe) }"
-          >
-            <img
-                v-if="classImage(char.classe)"
-                :src="classImage(char.classe)"
-                :alt="char.classe"
-                class="w-full h-full object-cover"
-            />
-            <span v-else class="text-[11px] font-bold" :style="{ color: classColor(char.classe) }">
-              {{ char.pseudo.slice(0, 2).toUpperCase() }}
-            </span>
-          </div>
-
-          <div class="flex-1 min-w-0">
-            <p class="text-[13px] font-bold text-[#c8e8f0] truncate">{{ char.pseudo }}</p>
-            <p class="text-[11px] text-[#4a7a8a]">{{ char.classe }} · Init. {{ char.initiative }}</p>
-          </div>
-
-          <div class="flex gap-1 flex-wrap justify-end max-w-[160px]">
-            <span v-for="role in char.roles" :key="role"
-                  class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#0f2a36]
-                         text-[#1eb8cc] border border-[#1eb8cc22]">
-              {{ role }}
-            </span>
-          </div>
-
-          <button
-              @click.stop="deleteCharacter(char.id)"
-              class="text-[#2a5060] hover:text-[#ff6b6b] transition-colors text-sm ml-1"
-          >
-            ✕
-          </button>
-        </div>
+            @delete="deleteCharacter(char.id)"
+        />
       </div>
     </div>
 
@@ -84,11 +49,10 @@
 
         <div class="flex flex-col gap-4 px-5 py-4">
 
-          <!-- Aperçu avatar -->
           <div class="flex justify-center">
             <div
                 class="w-16 h-16 rounded-full overflow-hidden border-2 flex items-center justify-center"
-                :style="{ borderColor: classColor(form.classe) }"
+                :style="{ borderColor: classColor(form.classe) || '#1a3a4a' }"
             >
               <img
                   v-if="form.classe && classImage(form.classe)"
@@ -102,7 +66,6 @@
             </div>
           </div>
 
-          <!-- Pseudo -->
           <div>
             <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider">Pseudo</label>
             <input
@@ -114,7 +77,6 @@
             />
           </div>
 
-          <!-- Classe -->
           <div>
             <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider">Classe</label>
             <select
@@ -127,47 +89,49 @@
             </select>
           </div>
 
-          <!-- Éléments -->
           <div>
             <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider mb-2 block">
               Éléments
             </label>
             <div class="flex flex-wrap gap-1.5">
               <button
-                  v-for="el in elements" :key="el.name"
-                  @click="toggleSelection(form.elements, el.name)"
-                  class="px-2.5 py-1 rounded text-[11px] font-bold border transition-all"
-                  :style="form.elements.includes(el.name)
+                  v-for="(el, name) in ELEMENTS" :key="name"
+                  @click="toggleSelection(form.elements, name)"
+                  class="flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] font-bold border transition-all"
+                  :style="form.elements.includes(name)
                     ? { background: el.color + '33', borderColor: el.color, color: el.color }
                     : { background: 'transparent', borderColor: '#1a3a4a', color: '#4a7a8a' }"
               >
-                {{ el.name }}
+                <img :src="el.image" :alt="name" class="w-4 h-4 object-contain" />
+                {{ name }}
               </button>
             </div>
           </div>
 
-          <!-- Rôles -->
           <div>
             <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider mb-2 block">
               Rôles
             </label>
             <div class="flex flex-wrap gap-1.5">
               <button
-                  v-for="role in roles" :key="role"
-                  @click="toggleSelection(form.roles, role)"
-                  class="px-2.5 py-1 rounded text-[11px] font-bold border transition-all"
-                  :class="form.roles.includes(role)
+                  v-for="(role, name) in ROLES" :key="name"
+                  @click="toggleSelection(form.roles, name)"
+                  class="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] font-bold border transition-all"
+                  :class="form.roles.includes(name)
                     ? 'bg-[#1eb8cc33] border-[#1eb8cc] text-[#1eb8cc]'
                     : 'bg-transparent border-[#1a3a4a] text-[#4a7a8a] hover:border-[#2a5a6a]'"
               >
-                {{ role }}
+                <img :src="role.image" :alt="name" class="w-4 h-4 object-contain" />
+                {{ name }}
               </button>
             </div>
           </div>
 
-          <!-- Initiative -->
           <div>
-            <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider">Initiative</label>
+            <label class="text-[10px] font-bold text-[#4a7a8a] uppercase tracking-wider flex items-center gap-1.5">
+              <img src="/icons/initiative.png" alt="initiative" class="w-4 h-4 object-contain opacity-70" />
+              Initiative
+            </label>
             <input
                 v-model.number="form.initiative"
                 type="number"
@@ -201,24 +165,10 @@
 
 <script setup lang="ts">
 import { load } from '@tauri-apps/plugin-store'
-import { CLASSES, classColor, classImage } from '~/composables/useCharacters'
+import { CLASSES, ELEMENTS, ROLES, classColor, classImage } from '~/composables/useCharacters'
 import type { Character } from '~/composables/useCharacters'
 
 const classes = Object.keys(CLASSES).sort()
-
-const elements = [
-  { name: 'Feu',   color: '#F0997B' },
-  { name: 'Eau',   color: '#85B7EB' },
-  { name: 'Air',   color: '#9FE1CB' },
-  { name: 'Terre', color: '#C0DD97' },
-  { name: 'Multi', color: '#AFA9EC' },
-]
-
-const roles = [
-  'Soins', 'Dégâts', 'Amélioration', 'Invocation',
-  'Entrave', 'Placement', 'Protection', 'Tank',
-]
-
 const characters = ref<Character[]>([])
 const showForm = ref(false)
 const editingChar = ref<Character | null>(null)

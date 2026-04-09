@@ -76,15 +76,15 @@ fn close_pie_menu() {
 fn toggle_overlay(state: State<AppState>, handle: tauri::AppHandle, enabled: bool) {
     if enabled {
         let accounts = state.0.lock().unwrap().accounts.clone();
-        std::thread::spawn(move || {
-            // Attend que la fenêtre précédente soit bien fermée
-            std::thread::sleep(std::time::Duration::from_millis(300));
-            if let Some(h) = APP_HANDLE.get() {
-                open_overlay(h);
-                std::thread::sleep(std::time::Duration::from_millis(800));
-                let _ = h.emit("accounts-updated", accounts);
-            }
-        });
+                std::thread::spawn(move || {
+                    // Attend que la fenêtre précédente soit bien fermée
+                    std::thread::sleep(std::time::Duration::from_millis(300));
+                    if let Some(h) = APP_HANDLE.get() {
+                        open_overlay(h);
+                        std::thread::sleep(std::time::Duration::from_millis(800));
+                        let _ = h.emit("accounts-updated", accounts);
+                    }
+                });
     } else {
         if let Some(w) = handle.get_webview_window("overlay") {
             let _ = w.close();
@@ -121,31 +121,33 @@ fn set_hook_enabled(enabled: bool) {
     mouse_hook::set_enabled(enabled);
 }
 
-fn open_overlay(handle: &tauri::AppHandle) {
-    eprintln!("Tentative d'ouverture de l'overlay...");
+#[tauri::command]
+fn quit(handle: tauri::AppHandle) {
+    handle.exit(0);
+}
 
+fn open_overlay(handle: &tauri::AppHandle) {
     use windows::Win32::UI::WindowsAndMessaging::{GetSystemMetrics, SM_CXSCREEN};
     let screen_width = unsafe { GetSystemMetrics(SM_CXSCREEN) };
     let overlay_w = 160i32;
-    let overlay_h = 44i32;
+    let overlay_h = 88i32;
     let x = (screen_width / 2) - (overlay_w / 2);
-    let y = 12i32;
 
-    let result = WebviewWindowBuilder::new(
+    let _ = WebviewWindowBuilder::new(
         handle,
         "overlay",
         WebviewUrl::External("http://localhost:3000/overlay".parse().unwrap()),
     )
     .title("")
     .inner_size(overlay_w as f64, overlay_h as f64)
-    .position(x as f64, y as f64)
+    .position(x as f64, 12.0)
     .decorations(false)
     .transparent(true)
     .always_on_top(true)
     .skip_taskbar(true)
     .resizable(false)
     .shadow(false)
-    .devtools(true)
+    .visible(true)
     .build();
 }
 
@@ -183,7 +185,8 @@ fn main() {
             close_pie_menu,
             toggle_overlay,
             resize_overlay,
-            set_hook_enabled
+            set_hook_enabled,
+            quit
         ])
         .run(tauri::generate_context!())
         .expect("Erreur au démarrage de Tauri");

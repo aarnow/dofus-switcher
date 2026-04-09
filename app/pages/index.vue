@@ -43,19 +43,6 @@
       </div>
     </div>
 
-    <div class="border-t border-[#0f2a36] bg-[#091820] px-6 py-3 flex items-center gap-2">
-      <span class="text-[#1eb8cc] text-[10px]">●</span>
-      <span class="text-[11px] text-[#2a6070]">En écoute · Mouse4 / Mouse5 actifs</span>
-      <div class="ml-auto">
-        <button
-            class="bg-[#1eb8cc] text-[#091820] font-bold text-[12px] tracking-widest
-                 rounded-full px-8 py-2 hover:bg-[#28d4e8] transition-colors"
-        >
-          JOUER
-        </button>
-      </div>
-    </div>
-
   </div>
 </template>
 
@@ -83,7 +70,17 @@ function getCharacterForAccount(title: string): Character | null {
 
 async function refresh() {
   characters.value = await getCharacters()
-  accounts.value = await invoke<Account[]>('detect_windows')
+  const detected = await invoke<Account[]>('detect_windows')
+
+  // Trie par initiative décroissante selon le personnage associé
+  accounts.value = detected.sort((a, b) => {
+    const charA = matchCharacter(a.title, characters.value)
+    const charB = matchCharacter(b.title, characters.value)
+    const initA = charA?.initiative ?? 0
+    const initB = charB?.initiative ?? 0
+    return initB - initA
+  })
+
   activeIndex.value = 0
 }
 

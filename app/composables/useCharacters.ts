@@ -39,6 +39,39 @@ export function classImage(classe: string): string {
     return CLASSES[classe]?.image ?? ''
 }
 
+export const ROLES: Record<string, { image: string }> = {
+    'Soins':        { image: '/roles/soin.png' },
+    'Dégâts':       { image: '/roles/degat.png' },
+    'Amélioration': { image: '/roles/amelioration.png' },
+    'Invocation':   { image: '/roles/invocation.png' },
+    'Entrave':      { image: '/roles/entrave.png' },
+    'Placement':    { image: '/roles/placement.png' },
+    'Protection':   { image: '/roles/protection.png' },
+    'Tank':         { image: '/roles/tank.png' },
+}
+
+export const ELEMENTS: Record<string, { color: string; image: string }> = {
+    'Feu':   { color: '#F0997B', image: '/elements/feu.png' },
+    'Eau':   { color: '#85B7EB', image: '/elements/eau.png' },
+    'Air':   { color: '#9FE1CB', image: '/elements/air.png' },
+    'Terre': { color: '#C0DD97', image: '/elements/terre.png' },
+    'Sagesse': { color: '#AFA9EC', image: '/elements/sagesse.png' },
+}
+
+export const INITIATIVE_ICON = '/icons/initiative.png'
+
+export function roleImage(role: string): string {
+    return ROLES[role]?.image ?? ''
+}
+
+export function elementImage(element: string): string {
+    return ELEMENTS[element]?.image ?? ''
+}
+
+export function elementColor(element: string): string {
+    return ELEMENTS[element]?.color ?? '#1eb8cc'
+}
+
 export async function getCharacters(): Promise<Character[]> {
     const store = await load('settings.json')
     return await store.get<Character[]>('characters') ?? []

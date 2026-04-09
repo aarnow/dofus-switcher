@@ -12,35 +12,60 @@
     <div
         class="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border flex-shrink-0"
         :style="character
-          ? { borderColor: classColor(character.classe) }
-          : { borderColor: '#1a4560' }"
+      ? { borderColor: classColor(character.classe) }
+      : { borderColor: '#1a4560' }"
     >
       <img
-          v-if="character && classImage(character.classe)"
-          :src="classImage(character.classe)"
-          :alt="character.classe"
+          :src="character && classImage(character.classe) ? classImage(character.classe) : '/classes/default.png'"
+          :alt="character ? character.classe : 'default'"
           class="w-full h-full object-cover"
       />
-      <span v-else class="text-[11px] font-bold text-[#5DCAA5]">
-        {{ initials }}
-      </span>
     </div>
 
     <div class="flex-1 min-w-0">
-      <p class="text-[13px] font-bold text-[#c8e8f0] truncate">
-        {{ character ? character.pseudo : name }}
-      </p>
-      <p class="text-[11px] text-[#4a7a8a]">
-        {{ character ? character.classe + ' · Init. ' + character.initiative : 'Client Dofus' }}
-      </p>
+      <!-- Ligne 1 : pseudo + initiative -->
+      <!-- Ligne 1 : pseudo + initiative -->
+      <div class="flex items-center gap-1.5">
+        <p class="text-[13px] font-bold text-[#c8e8f0] truncate">
+          {{ character ? character.pseudo : name }}
+        </p>
+        <div v-if="character" class="flex items-center gap-0.5 flex-shrink-0
+              border border-[#C268D7] rounded px-1.5 py-0.5"
+             style="background: rgba(194, 104, 215, 0.12);">
+          <img src="/icons/initiative.png" alt="initiative" class="w-4 h-4 object-contain" />
+          <span class="text-[11px] font-bold text-[#C268D7]">{{ character.initiative }}</span>
+        </div>
+      </div>
+
+      <!-- Ligne 2 : classe + éléments -->
+      <div class="flex items-center gap-1.5 mt-0.5">
+        <p class="text-[11px] text-[#4a7a8a]">
+          {{ character ? character.classe : 'Client Dofus' }}
+        </p>
+        <div v-if="character" class="flex items-center gap-0.5 border border-[#1a3a4a] rounded px-1.5 py-0.5"
+             style="background: rgba(0,0,0,0.3);">
+          <img
+              v-for="el in character.elements"
+              :key="el"
+              :src="elementImage(el)"
+              :alt="el"
+              :title="el"
+              class="w-4 h-4 object-contain"
+          />
+        </div>
+      </div>
     </div>
 
-    <div v-if="character" class="flex gap-1 flex-wrap justify-end max-w-[120px]">
-      <span v-for="role in character.roles.slice(0, 2)" :key="role"
-            class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-[#0f2a36]
-                   text-[#1eb8cc] border border-[#1eb8cc22]">
-        {{ role }}
-      </span>
+    <!-- Rôles -->
+    <div v-if="character" class="flex gap-1 flex-wrap justify-end max-w-[80px]">
+      <img
+          v-for="role in character.roles.slice(0, 3)"
+          :key="role"
+          :src="roleImage(role)"
+          :alt="role"
+          :title="role"
+          class="w-5 h-5 object-contain opacity-60 hover:opacity-100 transition-opacity"
+      />
     </div>
 
     <div
@@ -63,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { classColor, classImage } from '~/composables/useCharacters'
+import { classColor, classImage, roleImage, elementImage } from '~/composables/useCharacters'
 import type { Character } from '~/composables/useCharacters'
 
 const props = defineProps<{
