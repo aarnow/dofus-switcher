@@ -1,11 +1,11 @@
-use std::sync::Mutex;
+use std::sync::{Mutex};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::UI::WindowsAndMessaging::{
     CallNextHookEx, SetWindowsHookExW,
     HHOOK, MSLLHOOKSTRUCT, WH_MOUSE_LL, WH_KEYBOARD_LL,
     WM_XBUTTONDOWN, WM_XBUTTONUP, WM_KEYDOWN, KBDLLHOOKSTRUCT,
 };
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 pub struct HookConfig {
     pub key_next: u32,
@@ -15,12 +15,12 @@ pub struct HookConfig {
 }
 
 static HOOK_CALLBACK: Mutex<Option<Box<dyn Fn(bool) + Send>>> = Mutex::new(None);
-static HOOK_CONFIG: Mutex<HookConfig> = Mutex::new(HookConfig {
-    key_next: 0,
-    key_prev: 0,
-    mouse_next: 2,
-    mouse_prev: 1,
-});
+
+// Atomics pour éviter tout lock dans les callbacks
+static KEY_NEXT:   AtomicU32 = AtomicU32::new(0);
+static KEY_PREV:   AtomicU32 = AtomicU32::new(0);
+static MOUSE_NEXT: AtomicU32 = AtomicU32::new(2);
+static MOUSE_PREV: AtomicU32 = AtomicU32::new(1);
 static HOOK_ENABLED: AtomicBool = AtomicBool::new(true);
 
 pub fn set_enabled(enabled: bool) {
@@ -28,8 +28,10 @@ pub fn set_enabled(enabled: bool) {
 }
 
 pub fn update_config(config: HookConfig) {
-    let mut c = HOOK_CONFIG.lock().unwrap();
-    *c = config;
+    KEY_NEXT.store(config.key_next, Ordering::Relaxed);
+    KEY_PREV.store(config.key_prev, Ordering::Relaxed);
+    MOUSE_NEXT.store(config.mouse_next, Ordering::Relaxed);
+    MOUSE_PREV.store(config.mouse_prev, Ordering::Relaxed);
 }
 
 unsafe extern "system" fn mouse_proc(
@@ -48,18 +50,18 @@ unsafe extern "system" fn mouse_proc(
         if is_xbutton {
             let info = &*(l_param.0 as *const MSLLHOOKSTRUCT);
             let button = (info.mouseData >> 16) & 0xFFFF;
-            if let Ok(cfg) = HOOK_CONFIG.lock() {
-                if button == cfg.mouse_next || button == cfg.mouse_prev {
-                    if msg == WM_XBUTTONDOWN {
-                        if let Ok(cb) = HOOK_CALLBACK.lock() {
-                            if let Some(f) = cb.as_ref() {
-                                if button == cfg.mouse_next { f(true); }
-                                else { f(false); }
-                            }
+            let mouse_next = MOUSE_NEXT.load(Ordering::Relaxed);
+            let mouse_prev = MOUSE_PREV.load(Ordering::Relaxed);
+
+            if button == mouse_next || button == mouse_prev {
+                if msg == WM_XBUTTONDOWN {
+                    if let Ok(cb) = HOOK_CALLBACK.try_lock() {
+                        if let Some(f) = cb.as_ref() {
+                            f(button == mouse_next);
                         }
                     }
-                    return LRESULT(1);
                 }
+                return LRESULT(1);
             }
         }
     }
@@ -77,10 +79,16 @@ unsafe extern "system" fn keyboard_proc(
 
     if n_code >= 0 && w_param.0 as u32 == WM_KEYDOWN {
         let info = &*(l_param.0 as *const KBDLLHOOKSTRUCT);
-        if let (Ok(cb), Ok(cfg)) = (HOOK_CALLBACK.lock(), HOOK_CONFIG.lock()) {
-            if let Some(f) = cb.as_ref() {
-                if info.vkCode == cfg.key_next { f(true); }
-                else if info.vkCode == cfg.key_prev { f(false); }
+        let key_next = KEY_NEXT.load(Ordering::Relaxed);
+        let key_prev = KEY_PREV.load(Ordering::Relaxed);
+
+        if key_next > 0 && info.vkCode == key_next {
+            if let Ok(cb) = HOOK_CALLBACK.try_lock() {
+                if let Some(f) = cb.as_ref() { f(true); }
+            }
+        } else if key_prev > 0 && info.vkCode == key_prev {
+            if let Ok(cb) = HOOK_CALLBACK.try_lock() {
+                if let Some(f) = cb.as_ref() { f(false); }
             }
         }
     }

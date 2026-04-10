@@ -15,7 +15,6 @@ pub struct GameWindow {
 
 unsafe extern "system" fn enum_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
     let windows = &mut *(lparam.0 as *mut Vec<GameWindow>);
-
     if IsWindowVisible(hwnd).as_bool() {
         let mut buf = [0u16; 512];
         let len = GetWindowTextW(hwnd, &mut buf);
@@ -50,15 +49,20 @@ pub fn focus_window(hwnd: isize) {
         let current_thread = GetCurrentThreadId();
         let target_thread = GetWindowThreadProcessId(hwnd, None);
 
-        let _ = AttachThreadInput(fg_thread, current_thread, true);
-        let _ = AttachThreadInput(current_thread, target_thread, true);
+        let attach_fg = fg_thread != 0 && fg_thread != current_thread;
+        let attach_target = target_thread != 0
+            && target_thread != current_thread
+            && target_thread != fg_thread;
+
+        if attach_fg     { let _ = AttachThreadInput(current_thread, fg_thread, true); }
+        if attach_target { let _ = AttachThreadInput(current_thread, target_thread, true); }
 
         let _ = ShowWindow(hwnd, SW_RESTORE);
         let _ = BringWindowToTop(hwnd);
         let _ = SetForegroundWindow(hwnd);
 
-        let _ = AttachThreadInput(fg_thread, current_thread, false);
-        let _ = AttachThreadInput(current_thread, target_thread, false);
+        if attach_target { let _ = AttachThreadInput(current_thread, target_thread, false); }
+        if attach_fg     { let _ = AttachThreadInput(current_thread, fg_thread, false); }
     }
 }
 
@@ -69,32 +73,25 @@ pub struct SwitcherState {
 
 impl SwitcherState {
     pub fn new() -> Self {
-        Self {
-            accounts: Vec::new(),
-            current_index: 0,
-        }
+        Self { accounts: Vec::new(), current_index: 0 }
     }
 
     pub fn active_accounts(&self) -> Vec<isize> {
-        self.accounts
-            .iter()
-            .filter(|a| a.enabled)
-            .map(|a| a.hwnd)
-            .collect()
+        self.accounts.iter().filter(|a| a.enabled).map(|a| a.hwnd).collect()
     }
 
-    pub fn switch_next(&mut self) {
+    pub fn next_hwnd(&mut self) -> Option<isize> {
         let active = self.active_accounts();
-        if active.is_empty() { return; }
+        if active.is_empty() { return None; }
         self.current_index = (self.current_index + 1) % active.len();
-        focus_window(active[self.current_index]);
+        Some(active[self.current_index])
     }
 
-    pub fn switch_prev(&mut self) {
+    pub fn prev_hwnd(&mut self) -> Option<isize> {
         let active = self.active_accounts();
-        if active.is_empty() { return; }
+        if active.is_empty() { return None; }
         let len = active.len();
         self.current_index = (self.current_index + len - 1) % len;
-        focus_window(active[self.current_index]);
+        Some(active[self.current_index])
     }
 }

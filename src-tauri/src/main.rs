@@ -81,13 +81,17 @@ fn main() {
     let hook_shared = Arc::clone(&shared);
 
     mouse_hook::install_mouse_hook(move |next| {
-        let mut s = hook_shared.lock().unwrap();
-        if next { s.switch_next(); } else { s.switch_prev(); }
-        let active = s.active_accounts();
-        if let Some(&hwnd) = active.get(s.current_index) {
+        let hwnd = {
+            let mut s = hook_shared.lock().unwrap();
+            if next { s.next_hwnd() } else { s.prev_hwnd() }
+        };
+        if let Some(hwnd) = hwnd {
             if let Some(handle) = APP_HANDLE.get() {
                 let _ = handle.emit("switch", hwnd);
             }
+            std::thread::spawn(move || {
+                windows_api::focus_window(hwnd);
+            });
         }
     });
 
