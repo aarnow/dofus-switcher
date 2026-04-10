@@ -8,6 +8,112 @@
       </SettingRow>
     </SettingCard>
 
+    <!-- Variant overlay -->
+    <SettingCard>
+      <p class="text-[13px] font-bold text-[#c8ead8]">Apparence de l'overlay</p>
+      <p class="text-[11px] text-[#3a7a5a] mt-0.5">Choisissez le style de l'overlay.</p>
+
+      <div class="flex gap-2 mt-2">
+        <button
+            @click="saveOverlayVariant('default')"
+            class="flex-1 py-2 rounded-lg text-[11px] font-bold transition-all duration-150"
+            :style="overlayVariant === 'default'
+          ? 'background: rgba(93,202,165,0.2); border: 1px solid rgba(93,202,165,0.5); color: #5DCAA5;'
+          : 'background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); color: #3a7a5a;'"
+        >
+          Par défaut
+        </button>
+        <button
+            @click="saveOverlayVariant('compact')"
+            class="flex-1 py-2 rounded-lg text-[11px] font-bold transition-all duration-150"
+            :style="overlayVariant === 'compact'
+          ? 'background: rgba(93,202,165,0.2); border: 1px solid rgba(93,202,165,0.5); color: #5DCAA5;'
+          : 'background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); color: #3a7a5a;'"
+        >
+          Compact
+        </button>
+      </div>
+
+      <div v-if="overlayVariant === 'compact'" class="flex flex-col gap-3 mt-3">
+
+        <!-- Dimensions -->
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] text-[#3a7a5a] w-20">Largeur</span>
+          <input
+              v-model.number="compactWidth"
+              @change="saveCompactDimensions"
+              type="number" min="200" max="1920" step="1"
+              class="flex-1 rounded-lg px-3 py-1.5 text-[12px] font-bold text-[#c8ead8] outline-none"
+              style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);"
+              @focus="e => (e.target as HTMLElement).style.borderColor='rgba(93,202,165,0.4)'"
+              @blur="e => (e.target as HTMLElement).style.borderColor='rgba(255,255,255,0.08)'"
+          />
+          <span class="text-[11px] text-[#3a7a5a]">px</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] text-[#3a7a5a] w-20">Hauteur</span>
+          <input
+              v-model.number="compactHeight"
+              @change="saveCompactDimensions"
+              type="number" min="40" max="500" step="1"
+              class="flex-1 rounded-lg px-3 py-1.5 text-[12px] font-bold text-[#c8ead8] outline-none"
+              style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);"
+              @focus="e => (e.target as HTMLElement).style.borderColor='rgba(93,202,165,0.4)'"
+              @blur="e => (e.target as HTMLElement).style.borderColor='rgba(255,255,255,0.08)'"
+          />
+          <span class="text-[11px] text-[#3a7a5a]">px</span>
+        </div>
+
+        <!-- Séparateur -->
+        <div class="w-full h-px mt-1" style="background: rgba(255,255,255,0.05);"/>
+        <p class="text-[11px] font-bold text-[#c8ead8]">Position</p>
+
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] text-[#3a7a5a] w-20">X</span>
+          <input
+              v-model.number="compactX"
+              @change="saveCompactPosition"
+              type="number" min="0" max="3840" step="1"
+              class="flex-1 rounded-lg px-3 py-1.5 text-[12px] font-bold text-[#c8ead8] outline-none"
+              style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);"
+              @focus="e => (e.target as HTMLElement).style.borderColor='rgba(93,202,165,0.4)'"
+              @blur="e => (e.target as HTMLElement).style.borderColor='rgba(255,255,255,0.08)'"
+          />
+          <span class="text-[11px] text-[#3a7a5a]">px</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-[11px] text-[#3a7a5a] w-20">Y</span>
+          <input
+              v-model.number="compactY"
+              @change="saveCompactPosition"
+              type="number" min="0" max="2160" step="1"
+              class="flex-1 rounded-lg px-3 py-1.5 text-[12px] font-bold text-[#c8ead8] outline-none"
+              style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);"
+              @focus="e => (e.target as HTMLElement).style.borderColor='rgba(93,202,165,0.4)'"
+              @blur="e => (e.target as HTMLElement).style.borderColor='rgba(255,255,255,0.08)'"
+          />
+          <span class="text-[11px] text-[#3a7a5a]">px</span>
+        </div>
+
+        <button
+            @click="resetCompactPosition"
+            class="self-start flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-150"
+            style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); color: #3a7a5a;"
+            @mouseenter="e => (e.currentTarget as HTMLElement).style.borderColor='rgba(93,202,165,0.3)'"
+            @mouseleave="e => (e.currentTarget as HTMLElement).style.borderColor='rgba(255,255,255,0.08)'"
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          Réinitialiser la position
+        </button>
+      </div>
+
+    </SettingCard>
+
     <!-- Touches -->
     <SettingCard>
       <SettingRow title="Touches de switch" description="Appuyez sur &quot;Modifier&quot; puis sur la touche ou le bouton souris souhaité." />
@@ -105,6 +211,12 @@ const overlayEnabled = ref(true)
 const capturing = ref<string | null>(null)
 const confirmUninstall = ref(false)
 
+const overlayVariant = ref<'default' | 'compact'>('default')
+const compactWidth = ref(600)
+const compactHeight = ref(80)
+const compactX = ref(-1) // -1 = centré par défaut
+const compactY = ref(12)
+
 const bindings = ref([
   { id: 'next', label: 'Suivant',   display: 'Mouse5', value: { type: 'mouse', code: 2 } },
   { id: 'prev', label: 'Précédent', display: 'Mouse4', value: { type: 'mouse', code: 1 } },
@@ -137,6 +249,20 @@ onMounted(async () => {
     bindings.value = savedBindings
   }
 
+  const savedVariant = await store.get<string>('overlayVariant')
+  if (savedVariant) overlayVariant.value = savedVariant as 'default' | 'compact'
+
+  const savedCompactWidth = await store.get<number>('compactWidth')
+  if (savedCompactWidth) compactWidth.value = savedCompactWidth
+
+  const savedCompactHeight = await store.get<number>('compactHeight')
+  if (savedCompactHeight) compactHeight.value = savedCompactHeight
+
+  const savedX = await store.get<number>('compactX')
+  const savedY = await store.get<number>('compactY')
+  if (savedX !== null && savedX !== undefined) compactX.value = savedX
+  if (savedY !== null && savedY !== undefined) compactY.value = savedY
+
   const appData = await invoke<string>('get_app_paths')
   const parts = appData.split('|')
   if(infos.value[0]) infos.value[0].value = parts[0] ?? ''
@@ -145,7 +271,7 @@ onMounted(async () => {
   window.addEventListener('keydown', (e) => {
     if (!capturing.value) return
     e.preventDefault()
-    stopCapture(e.key.toUpperCase(), 'key', e.code)
+    stopCapture(e.key.toUpperCase(), 'key', +e.code)
   })
 
   window.addEventListener('mousedown', (e) => {
@@ -154,6 +280,42 @@ onMounted(async () => {
     else if (e.button === 4) stopCapture('Mouse5', 'mouse', 2)
   })
 })
+
+async function saveOverlayVariant(variant: 'default' | 'compact') {
+  overlayVariant.value = variant
+  const store = await getStore()
+  await store.set('overlayVariant', variant)
+  await store.save()
+}
+
+async function saveCompactDimensions() {
+  const store = await getStore()
+  await store.set('compactWidth', compactWidth.value)
+  await store.set('compactHeight', compactHeight.value)
+  await store.save()
+  await invoke('resize_compact_overlay', {
+    width: compactWidth.value,
+    height: compactHeight.value,
+  })
+}
+
+async function saveCompactPosition() {
+  const store = await getStore()
+  await store.set('compactX', compactX.value)
+  await store.set('compactY', compactY.value)
+  await store.save()
+  await invoke('move_compact_overlay', { x: compactX.value, y: compactY.value })
+}
+
+async function resetCompactPosition() {
+  compactX.value = -1
+  compactY.value = 12
+  const store = await getStore()
+  await store.set('compactX', -1)
+  await store.set('compactY', 12)
+  await store.save()
+  await invoke('move_compact_overlay', { x: -1, y: 12 })
+}
 
 async function toggleOverlay() {
   await invoke('toggle_overlay', { enabled: overlayEnabled.value })

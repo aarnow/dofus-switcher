@@ -87,10 +87,6 @@ const nav = [
   },
 ]
 
-const pageTitle = computed(() => {
-  return nav.find(n => n.to === route.path)?.label ?? 'Dofus Switcher'
-})
-
 async function quit() {
   await invoke('quit')
 }
@@ -102,6 +98,21 @@ onMounted(async () => {
   if (savedOverlay === false) {
     await invoke('toggle_overlay', {enabled: false})
   }
+
+  const savedVariant = await store.get<string>('overlayVariant') ?? 'default'
+  const savedW = await store.get<number>('compactWidth') ?? 600
+  const savedH = await store.get<number>('compactHeight') ?? 80
+
+  const savedX = await store.get<number>('compactX') ?? -1
+  const savedY = await store.get<number>('compactY') ?? 12
+
+  await invoke('update_overlay_config', {
+    variant: savedVariant,
+    width: savedW,
+    height: savedH,
+    x: savedX,
+    y: savedY,
+  })
 
   const savedBindings = await store.get<{ id: string; value: { type: string; code: number } }[]>('bindings')
   if (savedBindings && savedBindings.length > 0) {
